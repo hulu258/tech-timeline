@@ -1,0 +1,620 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>中国古代数理科技时间线可视化</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: "Microsoft Yahei", SimSun, serif;
+        }
+        body {
+            background-color: #f5f5f5;
+            padding: 20px;
+        }
+        header {
+            background: #2c3e50;
+            color: #fff;
+            padding: 20px 30px;
+            border-radius: 10px;
+            margin-bottom: 25px;
+        }
+        h1 {
+            font-size: 26px;
+            margin-bottom: 15px;
+        }
+        .filter-bar {
+            display: flex;
+            gap: 16px;
+            align-items: center;
+            flex-wrap: wrap;
+        }
+        .filter-item {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+        button {
+            padding: 7px 14px;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 14px;
+            transition: 0.2s;
+        }
+        .btn-normal {
+            background: #3498db;
+            color: white;
+        }
+        .btn-normal:hover {
+            background: #2980b9;
+        }
+        .btn-cold {
+            background: #e67e22;
+            color: white;
+        }
+        .btn-cold:hover {
+            background: #d35400;
+        }
+        #yearInput {
+            padding: 7px 10px;
+            width: 120px;
+            border-radius: 6px;
+            border: none;
+            outline: none;
+        }
+        .timeline-wrap {
+            background: white;
+            padding: 50px 20px;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px #ddd;
+            position: relative;
+            max-width: 1000px;
+            margin: 0 auto;
+        }
+        .timeline-wrap::before {
+            content:"";
+            position:absolute;
+            left:50%;
+            top:0;
+            width:4px;
+            height:100%;
+            background:#2c3e50;
+            transform: translateX(-50%);
+        }
+        .timeline {
+            display: flex;
+            flex-direction: column;
+            gap: 40px;
+            position: relative;
+        }
+        .timeline-item {
+            width: 45%;
+            padding: 16px;
+            border-radius: 10px;
+            cursor: pointer;
+            transition: transform 0.25s ease;
+            border-left: 5px solid transparent;
+            position: relative;
+        }
+        .item-left{
+            align-self: flex-start;
+        }
+        .item-right{
+            align-self: flex-end;
+        }
+        .timeline-item::after{
+            content:"";
+            width:16px;
+            height:16px;
+            border-radius:50%;
+            background:#2c3e50;
+            position:absolute;
+            top:20px;
+            z-index:2;
+        }
+        .item-left::after{
+            right: -8.5%;
+        }
+        .item-right::after{
+            left: -8.5%;
+        }
+        .item-left::before{
+            content:"";
+            position:absolute;
+            right:-15px;
+            top:22px;
+            border-width:8px 0 8px 15px;
+            border-style:solid;
+            border-color:transparent transparent transparent #ddd;
+        }
+        .item-right::before{
+            content:"";
+            position:absolute;
+            left:-15px;
+            top:22px;
+            border-width:8px 15px 8px 0;
+            border-style:solid;
+            border-color:transparent #ddd transparent transparent;
+        }
+        .timeline-item:hover {
+            transform: translateY(-6px);
+            box-shadow: 0 6px 15px #ccc;
+    }
+        .timeline-item:hover {
+            transform: translateY(8px);
+            box-shadow: 0 6px 15px #ccc;
+        }
+        /* 领域配色 */
+        .math {
+            background: #e8f4ff;
+            border-left-color: #2179d8;
+        }
+        .astro {
+            background: #fffbe6;
+            border-left-color: #f39c12;
+        }
+        .physics {
+            background: #e6fff9;
+            border-left-color: #00a884;
+        }
+        .timeline-item h4 {
+            font-size: 17px;
+            margin-bottom: 8px;
+            color: #222;
+        }
+        .timeline-item p {
+            font-size: 14px;
+            color: #555;
+        }
+        /* 弹窗样式 */
+        .modal-mask {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.6);
+            z-index: 99;
+            align-items: center;
+            justify-content: center;
+        }
+        .modal-box {
+            width: 620px;
+            background: white;
+            border-radius: 12px;
+            padding: 28px;
+            animation: pop 0.3s ease;
+        }
+        @keyframes pop {
+            from {transform: scale(0.85); opacity: 0;}
+            to {transform: scale(1); opacity: 1;}
+        }
+        .modal-box h2 {
+            color: #2c3e50;
+            margin-bottom: 20px;
+            padding-bottom: 12px;
+            border-bottom: 1px solid #eee;
+        }
+        .modal-content p {
+            margin: 12px 0;
+            line-height: 1.7;
+            font-size: 15px;
+        }
+        .modal-content b {
+            color: #2c3e50;
+            min-width: 100px;
+            display: inline-block;
+        }
+        .modal-close {
+            margin-top: 20px;
+            background: #7f8c8d;
+            color: white;
+            width: 100%;
+            padding: 10px;
+            font-size: 16px;
+        }
+        .modal-close:hover {
+            background: #636e70;
+        }
+        /* 底部科普区域 */
+        .tips-area {
+            margin-top: 30px;
+            background: #fff;
+            padding: 22px;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px #ddd;
+        }
+        .tips-area h3 {
+            color: #c0392b;
+            margin-bottom: 12px;
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <h1>古代科技史料数字化 — 中国古代数理科技时间线可视化网页</h1>
+        <div class="filter-bar">
+            <div class="filter-item">
+                <input type="checkbox" id="filterMath" checked>
+                <label for="filterMath">数学算学</label>
+            </div>
+            <div class="filter-item">
+                <input type="checkbox" id="filterAstro" checked>
+                <label for="filterAstro">天文历法</label>
+            </div>
+            <div class="filter-item">
+                <input type="checkbox" id="filterPhysics" checked>
+                <label for="filterPhysics">物理工程</label>
+            </div>
+            <button class="btn-cold" id="onlyColdBtn">仅展示冷门成果</button>
+            <input type="number" id="yearInput" placeholder="输入年份跳转">
+            <button class="btn-normal" id="jumpBtn">定位年代</button>
+        </div>
+    </header>
+
+    <div class="timeline-wrap">
+        <div class="timeline" id="timelineContainer"></div>
+    </div>
+
+    <div class="tips-area">
+        <h3>趣味延伸：破除认知误区</h3>
+        <p>大众长期存在一种片面认知：“中国古代科技只靠经验积累，不存在严谨数学算法与理论推导”。通过本时间线收录的完整史料可以进行有力反驳：
+            1. 代数算法：《九章算术》的盈不足插值法、多元一次方程组矩阵消元、宋元天元术与四元高次消元，都是标准化、可复用的通用算法，并非单一案例经验；
+            2. 极限与几何算法：刘徽割圆术的无限分割极限思想、祖暅等积原理，建立了严密的几何证明逻辑；
+            3. 天文数值算法：僧一行二次插值、郭守敬三次差分历法算法，依靠高阶数学拟合天体不规则运动；
+            4. 物理数理结合：朱载堉依靠上百万次开方运算算出十二平均律、沈括定量观测地磁偏差，实现物理现象的数字化描述。
+           我国古代数理科学既有大量实用成果，也诞生了完整的算法体系与理论思想，只是学术表达方式和近代西方不同，并非缺少科学思维。
+           同时页面新增的贾宪三角、沈括十二气历、地磁偏角等冷门成果，也可以看出古代科学家持续的创新探索能力。</p>
+    </div>
+
+    <!-- 详情弹窗 -->
+    <div class="modal-mask" id="modalMask">
+        <div class="modal-box">
+            <h2 id="modalTitle"></h2>
+            <div class="modal-content" id="modalContent"></div>
+            <button class="modal-close" id="closeModalBtn">关闭详情</button>
+        </div>
+    </div>
+
+    <script>
+        // 完整史料数据源
+        const techData = [
+    {
+        year: "商周",
+        yearNum: -1000,
+        name: "算筹计数",
+        type: "math",
+        isCold: true,
+        author: "佚名",
+        principle: "采用十进位值制，纵横相间摆放算筹记录数字，可直接完成加减乘除、开平方、开立方运算，数位空白代表0。",
+        value: "世界最早成熟的十进位位值计数系统，奠定中国两千余年计算基础。",
+        coldInfo: "商代甲骨文中已出现完整十进制数字记录，出现时间早于古巴比伦位值制计数。"
+    },
+    {
+        year: "战国",
+        yearNum: -700,
+        name: "《周髀算经》勾股定理",
+        type: "math",
+        isCold: false,
+        author: "商高、佚名后世编撰",
+        principle: "提出“勾三、股四、弦五”特例，并一般性阐述勾股平方和关系，使用勾股算法进行天地距离测算，记载最早的天文三角测量。",
+        value: "中国最早的数理天文学著作，世界较早完整记载勾股应用的文献。",
+        coldInfo: "书中记载的“日高术”，是后世海岛算经重差算法的源头。"
+    },
+    {
+        year: "战国",
+        yearNum: -400,
+        name: "《墨经》光学力学理论",
+        type: "physics",
+        isCold: true,
+        author: "墨家学派",
+        principle: "系统记载小孔成像、平面镜、凹面镜成像光路规律；定义力、杠杆平衡、浮力配重原理。",
+        value: "世界最早成体系光学、静力学理论文献，完整阐述光沿直线传播。",
+        coldInfo: "墨家给出力学定义：“力，形之所以奋也”，精准概括力改变运动状态。"
+    },
+    {
+        year: "先秦战国",
+        yearNum: -350,
+        name: "四分历、石申星表",
+        type: "astro",
+        isCold: true,
+        author: "石申、佚名史官",
+        principle: "四分历定回归年365.25日，十九年七闰调和阴阳历；石申精确记录恒星赤道坐标、行星运行周期。",
+        value: "奠定古代历法置闰规则，石申星表是现存最早恒星坐标表。",
+        coldInfo: "石申记载木、火、土、金、水五星运行规律，早于古希腊天文观测。"
+    },
+    {
+        year: "西汉",
+        yearNum: -104,
+        name: "《太初历》浑仪赤道装置",
+        type: "astro",
+        isCold: false,
+        author: "落下闳、司马迁",
+        principle: "确立正月为岁首，二十四节气纳入官方历法；浑仪采用赤道坐标系观测天体，可精准测量日月星辰位置。",
+        value: "后世两千余年阴阳合历标准范式，赤道观测体系领先西方千年。",
+        coldInfo: "落下闳浑仪赤道结构，西方直到16世纪才普及同类装置。"
+    },
+    {
+        year: "西汉",
+        yearNum: -100,
+        name: "《九章算术》",
+        type: "math",
+        isCold: false,
+        author: "张苍、耿寿昌",
+        principle: "全书分九大类数学问题：面积测算、比例换算、开方运算、工程体积、赋税分配、线性插值、多元一次方程组、勾股几何；首创“盈不足”线性逼近算法、矩阵消元解方程组。",
+        value: "东方数学体系奠基著作，其方程组解法是全球最早完整线性代数算法。",
+        coldInfo: "盈不足算法经丝绸之路传入阿拉伯，中世纪欧洲广泛用于商业计算。"
+    },
+    {
+        year: "三国",
+        yearNum: 260,
+        name: "刘徽割圆术",
+        type: "math",
+        isCold: false,
+        author: "刘徽",
+        principle: "极限几何思想：不断分割圆内接正多边形，多边形边数越多，面积越接近圆形，迭代计算圆周率，求得π≈3.1416。",
+        value: "世界首个系统性圆周率迭代计算方法，开创中国几何极限研究。",
+        coldInfo: "《海岛算经》配套相似三角形测距算法，完成无仪器远距离测高测远。"
+    },
+    {
+        year: "南北朝",
+        yearNum: 480,
+        name: "祖冲之圆周率与祖暅原理",
+        type: "math",
+        isCold: true,
+        author: "祖冲之、祖暅",
+        principle: "延续割圆术迭代，锁定圆周率区间3.1415926~3.1415927；祖暅提出“幂势既同，则积不容异”：等高、等横截面积的立体体积相等。",
+        value: "圆周率精度保持世界纪录近千年；等积原理比西方卡瓦列里早1100年。",
+        coldInfo: "《缀术》包含高次方程求解方法，曾传入朝鲜、日本作为官方教材。"
+    },
+    {
+        year: "东汉",
+        yearNum: 120,
+        name: "张衡《灵宪》浑天学说",
+        type: "astro",
+        isCold: true,
+        author: "张衡",
+        principle: "提出“浑天如鸡子，地如鸡中黄”的地心宇宙模型，解释月食成因、天体运行规律，测算日月直径比例。",
+        value: "古代浑天说理论巅峰，系统科学解释月食原理。",
+        coldInfo: "张衡已经认知到月亮本身不发光，月光来自日光反射。"
+    },
+    {
+        year: "东汉",
+        yearNum: 132,
+        name: "候风地动仪、漏水浑天仪",
+        type: "physics",
+        isCold: false,
+        author: "张衡",
+        principle: "地动仪利用悬垂摆惯性触发机械，分方位感应地震；漏水浑天仪以水力驱动齿轮，自动模拟天体周日运动。",
+        value: "世界首台地震检测仪器，水力天文演示装置是自动化机械先驱。",
+        coldInfo: "张衡机械传动思路，现代地震仪仍沿用惯性传感核心逻辑。"
+    },
+    {
+        year: "唐代",
+        yearNum: 720,
+        name: "《大衍历》子午线实测",
+        type: "astro",
+        isCold: false,
+        author: "僧一行",
+        principle: "组织全国多地实测子午线弧长；使用二次内插法拟合日月不均匀运行轨迹，修正传统历法误差。",
+        value: "人类历史首次实地测量地球子午线长度，首创天体运动非线性插值算法。",
+        coldInfo: "黄道游仪修正黄赤道夹角偏差，大幅提升行星观测精度。"
+    },
+    {
+        year: "唐代",
+        yearNum: 725,
+        name: "一行 水运浑天仪",
+        type: "physics",
+        isCold: false,
+        author: "僧一行、梁令瓒",
+        principle: "水力驱动齿轮联动，可同步模拟日月五星运转，自带自动击鼓报时机械结构。",
+        value: "后世苏颂水运仪象台的直接技术来源，古代自动机械钟表先驱。",
+        coldInfo: "其自动报时机械结构，已经具备棘轮、凸轮等精密机械设计。"
+    },
+    {
+        year: "北宋",
+        yearNum: 1050,
+        name: "贾宪三角（开方作法本源）",
+        type: "math",
+        isCold: true,
+        author: "贾宪",
+        principle: "构造二项式系数三角阵列，给出高次幂开方的迭代公式，可用来求解任意高次方程的数值解。",
+        value: "比欧洲帕斯卡三角早近600年，是宋元高次代数的核心基础。",
+        coldInfo: "后世杨辉完整引用并推广，因此常被误称杨辉三角，原创者实为贾宪。"
+    },
+    {
+        year: "北宋",
+        yearNum: 1080,
+        name: "沈括《十二气历》",
+        type: "astro",
+        isCold: true,
+        author: "沈括",
+        principle: "抛弃传统阴阳合历，以二十四节气为基准，设置十二个阳历月份，月份和季节完全绑定，不存在闰月。",
+        value: "理念和现代公历高度一致，极大方便农耕时节排布。",
+        coldInfo: "因违背传统历法礼制，在宋代未能推行，八百年后英国才出现同类历法设计。"
+    },
+    {
+        year: "北宋",
+        yearNum: 1086,
+        name: "沈括发现地磁偏角",
+        type: "physics",
+        isCold: true,
+        author: "沈括",
+        principle: "通过大量磁针实验，发现磁针指向并非正南北，存在固定偏角，记录地磁子午线与地理子午线的差值。",
+        value: "人类历史首次记载地磁偏角现象，比西方哥伦布的发现早400余年。",
+        coldInfo: "《梦溪笔谈》详细记录了多种磁针悬挂、漂浮的实验对比。"
+    },
+    {
+        year: "北宋",
+        yearNum: 1090,
+        name: "水运仪象台",
+        type: "physics",
+        isCold: true,
+        author: "苏颂",
+        principle: "水力驱动多级变速齿轮，整合天文观测、天体演示、自动报时三大功能，配备擒纵调速结构。",
+        value: "集天文、机械、计时一体的综合自动化装置，现代钟表擒纵机构雏形。",
+        coldInfo: "水运仪象台的齿轮变速系统，代表宋代机械制造最高水平。"
+    },
+    {
+        year: "元代",
+        yearNum: 1280,
+        name: "《授时历》简仪",
+        type: "astro",
+        isCold: false,
+        author: "郭守敬、王恂",
+        principle: "三次差分插值算法计算天体轨道，回归年精确至365.2425天；简仪删减冗余构件，消除观测遮挡。",
+        value: "历法精度等同于现代格里高利历，比西方早301年；简仪是古代最精密天文观测仪器。",
+        coldInfo: "郭守敬创造高表测影，将日影测量误差缩小至毫米级。"
+    },
+    {
+        year: "宋元",
+        yearNum: 1300,
+        name: "天元术、四元术",
+        type: "math",
+        isCold: true,
+        author: "李冶、朱世杰",
+        principle: "天元术以“天元”代表未知数建立一元方程；四元术用天、地、人、物代表四元，完成多元高次方程组消元求解；垛积招差完成高阶等差级数求和。",
+        value: "全球最早符号化多元高次代数体系，等价现代插值公式。",
+        coldInfo: "朱世杰高阶招差算法与牛顿插值公式数学逻辑完全一致。"
+    },
+    {
+        year: "明代",
+        yearNum: 1580,
+        name: "朱载堉十二平均律",
+        type: "physics",
+        isCold: true,
+        author: "朱载堉",
+        principle: "通过精密开方运算，算出十二等比音律管长度比例，消除传统三分损益律音差。",
+        value: "全球首个完整十二平均律数理推导，后传入欧洲奠定现代钢琴音律。",
+        coldInfo: "朱载堉自制高精度校准乐器，完成百万次量级数值测算验证音律。"
+    },
+    {
+        year: "明代末年",
+        yearNum: 1607,
+        name: "《几何原本》译介与中西数学融合",
+        type: "math",
+        isCold: false,
+        author: "徐光启、利玛窦",
+        principle: "翻译欧几里得几何体系，引入严格的逻辑证明范式，尝试将西方公理体系与中国传统算学结合。",
+        value: "开启中国近代几何逻辑研究，搭建中西数理科学交流桥梁。",
+        coldInfo: "徐光启原本计划完整翻译全书，受时局影响仅完成前六卷。"
+    }
+];
+
+        // DOM元素获取
+        const container = document.getElementById("timelineContainer");
+        const modalMask = document.getElementById("modalMask");
+        const modalTitle = document.getElementById("modalTitle");
+        const modalContent = document.getElementById("modalContent");
+        const closeModalBtn = document.getElementById("closeModalBtn");
+        const filterMath = document.getElementById("filterMath");
+        const filterAstro = document.getElementById("filterAstro");
+        const filterPhysics = document.getElementById("filterPhysics");
+        const onlyColdBtn = document.getElementById("onlyColdBtn");
+        const yearInput = document.getElementById("yearInput");
+        const jumpBtn = document.getElementById("jumpBtn");
+
+        // 渲染时间线函数
+        function renderData(dataList) {
+                container.innerHTML = "";
+                dataList.forEach((item, index) => {
+        const itemDiv = document.createElement("div");
+        // 根据下标奇偶，自动分配左右样式类
+        const sideClass = index % 2 === 0 ? "item-left" : "item-right";
+                itemDiv.className = `timeline-item ${item.type} ${sideClass}`;
+                itemDiv.innerHTML = `
+            <h4>${item.year} · ${item.name}</h4>
+            <p>代表：${item.author}</p>
+        `;
+        itemDiv.onclick = () => openModal(item);
+        container.appendChild(itemDiv);
+    })
+}
+
+        // 打开详情弹窗
+        function openModal(data) {
+            modalTitle.innerText = `${data.year} ${data.name}`;
+            modalContent.innerHTML = `
+                <p><b>代表人物：</b>${data.author}</p>
+                <p><b>核心技术原理：</b>${data.principle}</p>
+                <p><b>历史价值：</b>${data.value}</p>
+                <p style="color:#c0392b;"><b>冷门拓展史料：</b>${data.coldInfo}</p>
+            `;
+            modalMask.style.display = "flex";
+        }
+
+        // 关闭弹窗
+        function closeModal() {
+            modalMask.style.display = "none";
+        }
+        closeModalBtn.addEventListener("click", closeModal);
+        modalMask.addEventListener("click", (e) => {
+            if(e.target === modalMask) closeModal();
+        })
+
+        // 筛选逻辑
+        function filterData() {
+            let filtered = techData.filter(item => {
+                let match = false;
+                if(item.type === "math" && filterMath.checked) match = true;
+                if(item.type === "astro" && filterAstro.checked) match = true;
+                if(item.type === "physics" && filterPhysics.checked) match = true;
+                return match;
+            })
+            renderData(filtered);
+        }
+        filterMath.addEventListener("change", filterData);
+        filterAstro.addEventListener("change", filterData);
+        filterPhysics.addEventListener("change", filterData);
+
+        // 仅展示冷门成果
+        let coldMode = false;
+        onlyColdBtn.addEventListener("click", () => {
+            coldMode = !coldMode;
+            if(coldMode) {
+                onlyColdBtn.innerText = "显示全部成果";
+                const coldList = techData.filter(i => i.isCold);
+                renderData(coldList);
+            } else {
+                onlyColdBtn.innerText = "仅展示冷门成果";
+                filterData();
+            }
+        })
+
+        // 年份跳转功能
+        jumpBtn.addEventListener("click", () => {
+            const targetYear = Number(yearInput.value);
+            if(isNaN(targetYear)) {
+                alert("请输入有效数字年份，例如：-1000、1280");
+                return;
+            }
+            // 匹配最接近年份的数据
+            let targetItem = techData[0];
+            let minDiff = Math.abs(techData[0].yearNum - targetYear);
+            techData.forEach(item => {
+                const diff = Math.abs(item.yearNum - targetYear);
+                if(diff < minDiff) {
+                    minDiff = diff;
+                    targetItem = item;
+                }
+            })
+            // 找到对应卡片并滚动
+            const allCards = container.querySelectorAll(".timeline-item");
+            for(let card of allCards) {
+                if(card.innerText.includes(targetItem.name)) {
+                    card.scrollIntoView({behavior: "smooth", block: "center"});
+                    break;
+                }
+            }
+        })
+
+        // 页面初始化渲染全部数据
+        filterData();
+    </script>
+</body>
+</html>
